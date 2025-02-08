@@ -1,0 +1,31 @@
+name: Product Workflow Request
+description: Request a workflow run for a specific product and timeframe.
+labels: ["workflow-request"] # Optional label for filtering issues
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please provide the following details for your product workflow request.
+  - type: dropdown
+    id: product
+    label: Product
+    description: Select the product for this workflow.
+    options:
+      - ProductA
+      - ProductB
+      - ProductC
+      # Add your actual product options here
+  - type: input
+    id: start_datetime
+    label: Start Date & Time (YYYY-MM-DD HH:mm)
+    description: Enter the desired start date and time in YYYY-MM-DD HH:mm format (e.g., 2023-12-25 09:00).
+    placeholder: YYYY-MM-DD HH:mm
+    validations:
+      required: true
+  - type: input
+    id: end_datetime
+    label: End Date & Time (YYYY-MM-DD HH:mm)
+    description: Enter the desired end date and time in YYYY-MM-DD HH:mm format (e.g., 2023-12-26 17:00).
+    placeholder: YYYY-MM-DD HH:mm
+    validations:
+      required: true
