@@ -18,13 +18,6 @@ jobs:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
               const issue = context.payload.issue;
-              const comment = context.payload.comment;
-              const commenterLogin = comment.user.login;
-              const allowedManagers = {
-                'int': ['ganapathichidambaram', 'managerA2'],
-                'e2em': ['ganapathichidambaram', 'managerB2'],
-                'ProductC': ['ganapathichidambaram', 'managerC2']
-              };
 
               const issueBody = issue.body;
               // --- Parse Issue Body to Extract Data ---
