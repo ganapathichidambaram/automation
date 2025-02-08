@@ -37,6 +37,7 @@ jobs:
               'e2em': ['ganapathichidambaram', 'managerB2'],
               'ProductC': ['ganapathichidambaram', 'managerC2']
             };
+            const infraManagers = ['ganapathichidambaram', 'infraManager2'];
 
             const issueBody = issue.body;
             console.log("Issue Body:", issueBody);
@@ -64,11 +65,20 @@ jobs:
             }
 
             // Check if the commenter is an allowed manager for all products
+            let isProductManager = true;
             for (const product of products) {
               if (!allowedManagers[product] || !allowedManagers[product].includes(commenterLogin)) {
-                console.log(`Comment by ${commenterLogin} is not from an authorized manager for product ${product}. Exiting.`);
-                return;
+                isProductManager = false;
+                break;
               }
+            }
+
+            // Check if the commenter is an infra manager
+            let isInfraManager = infraManagers.includes(commenterLogin);
+
+            if (!isProductManager && !isInfraManager) {
+              console.log(`Comment by ${commenterLogin} is not from an authorized manager. Exiting.`);
+              return;
             }
 
             // Convert IST to UTC
@@ -99,8 +109,7 @@ jobs:
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: issue.number,
-                  body: `Error: Start workflow file for product **${product}** does not exist. Please check the workflow configuration.
-                  CRON: ${startCronExpression}`
+                  body: `Error: Start workflow file for product **${product}** does not exist. Please check the workflow configuration.\n\n**CRON:** ${startCronExpression}`
                 });
                 return;
               }
@@ -128,8 +137,7 @@ jobs:
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: issue.number,
-                  body: `Error: Stop workflow file for product **${product}** does not exist. Please check the workflow configuration.
-                  CRON: ${endCronExpression}`
+                  body: `Error: Stop workflow file for product **${product}** does not exist. Please check the workflow configuration.\n\n**CRON:** ${endCronExpression}`
                 });
                 return;
               }
@@ -149,51 +157,63 @@ jobs:
               });
             }
 
-            // Commit the changes in a single commit
-            const commitMessage = `Update schedule for product workflows`;
-            const baseTree = (await github.rest.git.getRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: 'heads/main'
-            })).data.object.sha;
+            // If infra manager approved, commit the changes
+            if (isInfraManager && filesToUpdate.length > 0) {
+              const commitMessage = `Update schedule for product workflows`;
+              const baseTree = (await github.rest.git.getRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: 'heads/main'
+              })).data.object.sha;
 
-            const tree = await github.rest.git.createTree({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              base_tree: baseTree,
-              tree: filesToUpdate.map(file => ({
-                path: file.path,
-                mode: '100644',
-                type: 'blob',
-                content: file.content
-              }))
-            });
+              const tree = await github.rest.git.createTree({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                base_tree: baseTree,
+                tree: filesToUpdate.map(file => ({
+                  path: file.path,
+                  mode: '100644',
+                  type: 'blob',
+                  content: file.content
+                }))
+              });
 
-            const newCommit = await github.rest.git.createCommit({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              message: commitMessage,
-              tree: tree.data.sha,
-              parents: [baseTree]
-            });
+              const newCommit = await github.rest.git.createCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                message: commitMessage,
+                tree: tree.data.sha,
+                parents: [baseTree]
+              });
 
-            await github.rest.git.updateRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: 'heads/main',
-              sha: newCommit.data.sha
-            });
+              await github.rest.git.updateRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: 'heads/main',
+                sha: newCommit.data.sha
+              });
 
-            // Update the issue with the approval details
-            let approvalDetails = '| Product | Approved By |\n| --- | --- |\n';
-            for (const product of products) {
-              approvalDetails += `| ${product} | ${commenterLogin} |\n`;
+              // Update the issue with the approval details and commit link
+              let approvalDetails = '| Product | Approved By |\n| --- | --- |\n';
+              for (const product of products) {
+                approvalDetails += `| ${product} | ${commenterLogin} |\n`;
+              }
+
+              const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${newCommit.data.sha}`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `### Workflow Scheduled Successfully\n\n**Products:** ${products.join(', ')}\n**Environment:** ${environment}\n**Start Date:** ${startDate}\n**End Date:** ${endDate}\n\n### Approval Details\n${approvalDetails}\n\n### Commit\n[View Commit](${commitUrl})`
+              });
+            } else if (isProductManager) {
+              // If product manager approved, notify that infra approval is required
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `### Product Manager Approval Received\n\n**Products:** ${products.join(', ')}\n**Environment:** ${environment}\n**Start Date:** ${startDate}\n**End Date:** ${endDate}\n\n**Approved By:** ${commenterLogin}\n\nInfra team approval is now required.`
+              });
             }
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issue.number,
-              body: `Workflow for product(s) **${products.join(', ')}** in environment **${environment}** scheduled successfully. Dates: Start: **${startDate}**, End: **${endDate}**.\n\n### Approval Details\n${approvalDetails}`
-            });
 
