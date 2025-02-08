@@ -22,9 +22,9 @@ jobs:
             const comment = context.payload.comment;
             const commenterLogin = comment.user.login;
             const allowedManagers = {
-              'ProductA': ['managerA1', 'managerA2'],
-              'ProductB': ['managerB1', 'managerB2'],
-              'ProductC': ['managerC1', 'managerC2']
+              'ProductA': ['ganapathichidambaram', 'managerA2'],
+              'ProductB': ['ganapathichidambaram', 'managerB2'],
+              'ProductC': ['ganapathichidambaram', 'managerC2']
             };
 
             const issueBody = issue.body;
