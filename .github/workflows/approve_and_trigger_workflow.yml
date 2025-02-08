@@ -93,7 +93,13 @@ jobs:
             }
 
             let workflowContent = fs.readFileSync(workflowFilePath, 'utf8');
-            workflowContent = workflowContent.replace(/schedule:\n\s+- cron: '.*'/, `schedule:\n  - cron: '${cronExpression}'`);
+            if (workflowContent.includes('schedule:')) {
+              workflowContent = workflowContent.replace(/schedule:\n\s+- cron: '.*'/, `schedule:\n  - cron: '${cronExpression}'`);
+            } else if (workflowContent.includes('on:')) {
+              workflowContent = workflowContent.replace(/on:/, `on:\n  schedule:\n    - cron: '${cronExpression}'`);
+            } else {
+              workflowContent = `on:\n  schedule:\n    - cron: '${cronExpression}'\n` + workflowContent;
+            }
             fs.writeFileSync(workflowFilePath, workflowContent);
 
             // Commit the changes
