@@ -71,51 +71,100 @@ jobs:
               }
             }
 
-            // Calculate cron expression from start date and time
-            const startDateTime = new Date(startDate);
-            const cronExpression = `${startDateTime.getUTCMinutes()} ${startDateTime.getUTCHours()} ${startDateTime.getUTCDate()} ${startDateTime.getUTCMonth() + 1} *`;
+            // Convert IST to UTC
+            const convertISTtoUTC = (dateString) => {
+              const date = new Date(dateString + ' GMT+0530');
+              return new Date(date.getTime() - (5.5 * 60 * 60 * 1000));
+            };
+
+            const startDateTime = convertISTtoUTC(startDate);
+            const endDateTime = convertISTtoUTC(endDate);
+
+            // Calculate cron expressions from start and end dates
+            const startCronExpression = `${startDateTime.getUTCMinutes()} ${startDateTime.getUTCHours()} ${startDateTime.getUTCDate()} ${startDateTime.getUTCMonth() + 1} *`;
+            const endCronExpression = `${endDateTime.getUTCMinutes()} ${endDateTime.getUTCHours()} ${endDateTime.getUTCDate()} ${endDateTime.getUTCMonth() + 1} *`;
 
             const fs = require('fs');
             const path = require('path');
 
-            for (const product of products) {
-              // Update the workflow file with the new schedule
-              const workflowFilePath = path.join(process.env.GITHUB_WORKSPACE, '.github', 'workflows', `start-${product.toLowerCase().trim()}-env.yml`);
+            let filesToUpdate = [];
 
-              if (!fs.existsSync(workflowFilePath)) {
-                console.error(`Workflow file does not exist: ${workflowFilePath}`);
+            for (const product of products) {
+              // Update the start workflow file with the new schedule
+              const startWorkflowFilePath = path.join(process.env.GITHUB_WORKSPACE, '.github', 'workflows', `start-${product.toLowerCase().trim()}-env.yml`);
+
+              if (!fs.existsSync(startWorkflowFilePath)) {
+                console.error(`Start workflow file does not exist: ${startWorkflowFilePath}`);
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: issue.number,
-                  body: `Error: Workflow file for product **${product}** does not exist. Please check the workflow configuration.
-                  CRON: ${cronExpression}`
+                  body: `Error: Start workflow file for product **${product}** does not exist. Please check the workflow configuration.
+                  CRON: ${startCronExpression}`
                 });
                 return;
               }
 
-              let workflowContent = fs.readFileSync(workflowFilePath, 'utf8');
-              if (workflowContent.includes('schedule:')) {
-                workflowContent = workflowContent.replace(/schedule:\n\s+- cron: '.*'/, `schedule:\n  - cron: '${cronExpression}'`);
-              } else if (workflowContent.includes('on:')) {
-                workflowContent = workflowContent.replace(/on:/, `on:\n  schedule:\n    - cron: '${cronExpression}'`);
+              let startWorkflowContent = fs.readFileSync(startWorkflowFilePath, 'utf8');
+              if (startWorkflowContent.includes('schedule:')) {
+                startWorkflowContent = startWorkflowContent.replace(/schedule:\n\s+- cron: '.*'/, `schedule:\n  - cron: '${startCronExpression}'`);
+              } else if (startWorkflowContent.includes('on:')) {
+                startWorkflowContent = startWorkflowContent.replace(/on:/, `on:\n  schedule:\n    - cron: '${startCronExpression}'`);
               } else {
-                workflowContent = `on:\n  schedule:\n    - cron: '${cronExpression}'\n` + workflowContent;
+                startWorkflowContent = `on:\n  schedule:\n    - cron: '${startCronExpression}'\n` + startWorkflowContent;
               }
-              fs.writeFileSync(workflowFilePath, workflowContent);
+              fs.writeFileSync(startWorkflowFilePath, startWorkflowContent);
+              filesToUpdate.push({
+                path: `.github/workflows/start-${product.toLowerCase().trim()}-env.yml`,
+                content: Buffer.from(startWorkflowContent).toString('base64')
+              });
 
-              // Commit the changes
+              // Update the stop workflow file with the new schedule
+              const stopWorkflowFilePath = path.join(process.env.GITHUB_WORKSPACE, '.github', 'workflows', `stop-${product.toLowerCase().trim()}-env.yml`);
+
+              if (!fs.existsSync(stopWorkflowFilePath)) {
+                console.error(`Stop workflow file does not exist: ${stopWorkflowFilePath}`);
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `Error: Stop workflow file for product **${product}** does not exist. Please check the workflow configuration.
+                  CRON: ${endCronExpression}`
+                });
+                return;
+              }
+
+              let stopWorkflowContent = fs.readFileSync(stopWorkflowFilePath, 'utf8');
+              if (stopWorkflowContent.includes('schedule:')) {
+                stopWorkflowContent = stopWorkflowContent.replace(/schedule:\n\s+- cron: '.*'/, `schedule:\n  - cron: '${endCronExpression}'`);
+              } else if (stopWorkflowContent.includes('on:')) {
+                stopWorkflowContent = stopWorkflowContent.replace(/on:/, `on:\n  schedule:\n    - cron: '${endCronExpression}'`);
+              } else {
+                stopWorkflowContent = `on:\n  schedule:\n    - cron: '${endCronExpression}'\n` + stopWorkflowContent;
+              }
+              fs.writeFileSync(stopWorkflowFilePath, stopWorkflowContent);
+              filesToUpdate.push({
+                path: `.github/workflows/stop-${product.toLowerCase().trim()}-env.yml`,
+                content: Buffer.from(stopWorkflowContent).toString('base64')
+              });
+            }
+
+            // Commit the changes in a single commit
+            for (const file of filesToUpdate) {
+              const { path, content } = file;
+              const sha = (await github.rest.repos.getContent({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                path
+              })).data.sha;
+
               await github.rest.repos.createOrUpdateFileContents({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                path: `.github/workflows/start-${product.toLowerCase().trim()}-env.yml`,
-                message: `Update schedule for product ${product} workflow`,
-                content: Buffer.from(workflowContent).toString('base64'),
-                sha: (await github.rest.repos.getContent({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  path: `.github/workflows/start-${product.toLowerCase().trim()}-env.yml`
-                })).data.sha
+                path,
+                message: `Update schedule for product workflows`,
+                content,
+                sha
               });
             }
 
