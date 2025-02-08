@@ -57,7 +57,7 @@ jobs:
 
             // --- Parse Issue Body to Extract Data ---
             const productMatch = issueBody.match(/###\s*Product\s*\n([^\n]+)/); // Corrected Product Regex
-            const startDateMatch = issueBody.match(/###\s*Start Date & Time \(YYYY-MM-DD HH:mm\)\s*\n(.*)/s);
+            const startDateMatch = issueBody.match(/###\s*Start Date & Time \(YYYY-MM-DD HH:mm\)\s*\n([^\n]+)(?:\n###|$)/);
             const endDateMatch = issueBody.match(/###\s*End Date & Time \(YYYY-MM-DD HH:mm\)\s*\n(.*)/s);
 
             let product = productMatch ? productMatch[1].trim() : null;
