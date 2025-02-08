@@ -1,5 +1,8 @@
 name: Approve and Trigger Product Workflow
 
+permissions:
+  actions: write  #  Grant write permission to actions
+
 on:
   issue_comment:
     types: [created] # Trigger only when a new comment is created
@@ -13,88 +16,87 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-                const issue = context.payload.issue;
-                const comment = context.payload.comment;
-                const commenterLogin = comment.user.login;
-                const allowedManagers = ['ganapathichidambaram', 'ganapathichidambaram']; // Replace with your manager usernames
+            const issue = context.payload.issue;
+            const comment = context.payload.comment;
+            const commenterLogin = comment.user.login;
+            const allowedManagers = ['ganapathichidambaram', 'ganapathichidambaram']; // Replace with your manager usernames
 
-                if (!allowedManagers.includes(commenterLogin)) {
-                  console.log(`Comment by ${commenterLogin} is not from an authorized manager. Exiting.`);
-                  return; // Exit if not a manager
-                }
+            if (!allowedManagers.includes(commenterLogin)) {
+              console.log(`Comment by ${commenterLogin} is not from an authorized manager. Exiting.`);
+              return; // Exit if not a manager
+            }
 
-                if (issue.user.type === 'Bot') { // Avoid bot loops if your workflow creates comments
-                  console.log("Ignoring comment from bot user. Exiting.");
-                  return;
-                }
+            if (issue.user.type === 'Bot') {
+              console.log("Ignoring comment from bot user. Exiting.");
+              return;
+            }
 
-                if (issue.pull_request) { // Ignore comments on PRs if this workflow is only for issues
-                  console.log("Ignoring comment on Pull Request. Exiting.");
-                  return;
-                }
+            if (issue.pull_request) {
+              console.log("Ignoring comment on Pull Request. Exiting.");
+              return;
+            }
 
+            const issueBody = issue.body;
+            console.log("Issue Body:", issueBody);
 
-                const issueBody = issue.body;
-                console.log("Issue Body:", issueBody);
+            // --- Parse Issue Body to Extract Data ---
+            const productMatch = issueBody.match(/###\s*Product\s*\n([^\n]+)/); // Corrected Product Regex
+            const startDateMatch = issueBody.match(/###\s*Start Date & Time \(YYYY-MM-DD HH:mm\)\s*\n(.*)/s);
+            const endDateMatch = issueBody.match(/###\s*End Date & Time \(YYYY-MM-DD HH:mm\)\s*\n(.*)/s);
 
-                // --- Parse Issue Body to Extract Data ---
-                const productMatch = issueBody.match(/###\s*Product\s*\n(.*)/s);
-                const startDateMatch = issueBody.match(/###\s*Start Date & Time \(YYYY-MM-DD HH:mm\)\s*\n(.*)/s);
-                const endDateMatch = issueBody.match(/###\s*End Date & Time \(YYYY-MM-DD HH:mm\)\s*\n(.*)/s);
-
-                let product = productMatch ? productMatch[1].trim() : null;
-                let startDate = startDateMatch ? startDateMatch[1].trim() : null;
-                let endDate = endDateMatch ? endDateMatch[1].trim() : null;
-
-
-                if (!product || !startDate || !endDate) {
-                  console.error("Could not extract Product, Start Date, or End Date from issue body.");
-                  github.api.issues.createComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    issue_number: issue.number,
-                    body: "Error: Could not automatically extract Product, Start Date, or End Date from the issue. Please ensure the issue template was used correctly."
-                  });
-                  return;
-                }
-
-                console.log("Extracted Data:");
-                console.log("Product:", product);
-                console.log("Start Date:", startDate);
-                console.log("End Date:", endDate);
+            let product = productMatch ? productMatch[1].trim() : null;
+            let startDate = startDateMatch ? startDateMatch[1].trim() : null;
+            let endDate = endDateMatch ? endDateMatch[1].trim() : null;
 
 
-                // --- Trigger Product-Based Workflow ---
-                const workflowToTrigger = `product-${product.toLowerCase()}-workflow.yml`; // Example workflow filename convention
-                console.log(`Attempting to trigger workflow: ${workflowToTrigger}`);
+            if (!product || !startDate || !endDate) {
+              console.error("Could not extract Product, Start Date, or End Date from issue body.");
+              github.api.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: "Error: Could not automatically extract Product, Start Date, or End Date from the issue. Please ensure the issue template was used correctly."
+              });
+              return;
+            }
 
-                try {
-                  await github.rest.actions.createWorkflowDispatch({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    workflow_id: workflowToTrigger,
-                    ref: context.ref, // Or main branch, or specific branch
-                    inputs: {
-                      start_date: startDate,
-                      end_date: endDate,
-                      product: product,
-                      issue_number: issue.number.toString() // Pass issue number for context
-                    },
-                  });
-                  console.log(`Successfully triggered workflow: ${workflowToTrigger}`);
-                  github.api.issues.createComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    issue_number: issue.number,
-                    body: `Workflow for product **${product}** triggered successfully. Dates: Start: **${startDate}**, End: **${endDate}**.  You can track the workflow run in the Actions tab.`
-                  });
+            console.log("Extracted Data:");
+            console.log("Product:", product);
+            console.log("Start Date:", startDate);
+            console.log("End Date:", endDate);
 
-                } catch (error) {
-                  console.error("Error triggering workflow:", error);
-                  github.api.issues.createComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    issue_number: issue.number,
-                    body: `Error: Failed to trigger workflow for product **${product}**. Please check workflow configuration and logs. Error details: \n\`\`\`\n${error.message}\n\`\`\``
-                  });
-                }
+
+            // --- Trigger Product-Based Workflow ---
+            const workflowToTrigger = `product-${product.toLowerCase().trim()}-workflow.yml`; // Corrected workflow filename
+            console.log(`Attempting to trigger workflow: ${workflowToTrigger}`);
+
+            try {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: workflowToTrigger,
+                ref: context.ref,
+                inputs: {
+                  start_date: startDate,
+                  end_date: endDate,
+                  product: product,
+                  issue_number: issue.number.toString()
+                },
+              });
+              console.log(`Successfully triggered workflow: ${workflowToTrigger}`);
+              github.api.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `Workflow for product **${product}** triggered successfully. Dates: Start: **${startDate}**, End: **${endDate}**.  You can track the workflow run in the Actions tab.`
+              });
+
+            } catch (error) {
+              console.error("Error triggering workflow:", error);
+              github.api.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `Error: Failed to trigger workflow for product **${product}**. Please check workflow configuration and logs. Error details: \n\`\`\`\n${error.message}\n\`\`\``
+              });
+            }
