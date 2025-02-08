@@ -1,11 +1,11 @@
 name: Approve and Trigger Product Workflow
 
 permissions:
-  actions: write  #  Grant write permission to actions
+  actions: write
 
 on:
   issue_comment:
-    types: [created] # Trigger only when a new comment is created
+    types: [created]
 
 jobs:
   check_approval_and_trigger:
@@ -71,6 +71,12 @@ jobs:
             console.log(`Attempting to trigger workflow: ${workflowToTrigger}`);
 
             try {
+              github.api.issues.createComment({ // MOVED COMMENT BEFORE DISPATCH (FOR TESTING)
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `Workflow for product **${product}** triggered successfully. Dates: Start: **${startDate}**, End: **${endDate}**.  You can track the workflow run in the Actions tab.`
+              });
               await github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -84,16 +90,11 @@ jobs:
                 },
               });
               console.log(`Successfully triggered workflow: ${workflowToTrigger}`);
-              github.api.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue.number,
-                body: `Workflow for product **${product}** triggered successfully. Dates: Start: **${startDate}**, End: **${endDate}**.  You can track the workflow run in the Actions tab.`
-              });
+
 
             } catch (error) {
               console.error("Error triggering workflow:", error);
-              github.api.issues.createComment({
+              github.api.issues.createComment({ // ERROR COMMENT - KEEP AS IS
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
