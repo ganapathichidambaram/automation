@@ -3,6 +3,7 @@ name: Approve and Trigger Product Workflow
 permissions:
   issues: write
   actions: write
+  contents: write
 
 on:
   issue_comment:
@@ -12,21 +13,6 @@ jobs:
   check_approval_and_trigger:
     runs-on: ubuntu-latest
     steps:
-      # - name: Minimal Test Script
-      #   if: github.event.comment.body == 'Approve'
-      #   uses: actions/github-script@v6
-      #   with:
-      #     script: |
-      #       try {
-      #         await github.rest.issues.createComment({
-      #           owner: context.repo.owner,
-      #           repo: context.repo.repo,
-      #           issue_number: context.issue.number,
-      #           body: "Minimal test comment."
-      #         });
-      #       } catch (error) {
-      #         console.error("Error creating comment:", error);
-      #       }
       - name: Check if Comment is Approval
         if: github.event.comment.body == 'Approve'
         uses: actions/github-script@v6
@@ -35,81 +21,79 @@ jobs:
             const issue = context.payload.issue;
             const comment = context.payload.comment;
             const commenterLogin = comment.user.login;
-            const allowedManagers = ['ganapathichidambaram', 'ganapathichidambaram']; // Replace with your manager usernames
-
-            if (!allowedManagers.includes(commenterLogin)) {
-              console.log(`Comment by ${commenterLogin} is not from an authorized manager. Exiting.`);
-              return; // Exit if not a manager
-            }
-
-            if (issue.user.type === 'Bot') {
-              console.log("Ignoring comment from bot user. Exiting.");
-              return;
-            }
-
-            if (issue.pull_request) {
-              console.log("Ignoring comment on Pull Request. Exiting.");
-              return;
-            }
+            const allowedManagers = {
+              'ProductA': ['managerA1', 'managerA2'],
+              'ProductB': ['managerB1', 'managerB2'],
+              'ProductC': ['managerC1', 'managerC2']
+            };
 
             const issueBody = issue.body;
             console.log("Issue Body:", issueBody);
 
             // --- Parse Issue Body to Extract Data ---
-            const productMatch = issueBody.match(/###\s*Product\s*\n([^\n]+)/); // Corrected Product Regex
+            const productMatch = issueBody.match(/###\s*Product\s*\n([^\n]+)/);
+            const environmentMatch = issueBody.match(/###\s*Environment\s*\n([^\n]+)/);
             const startDateMatch = issueBody.match(/###\s*Start Date & Time \(YYYY-MM-DD HH:mm\)\s*\n([^\n]+)/);
             const endDateMatch = issueBody.match(/###\s*End Date & Time \(YYYY-MM-DD HH:mm\)\s*\n([^\n]+)/);
 
-            let product = productMatch ? productMatch[1].trim() : null;
+            let products = productMatch ? productMatch[1].split(',').map(p => p.trim()) : [];
+            let environment = environmentMatch ? environmentMatch[1].trim() : null;
             let startDate = startDateMatch ? startDateMatch[1].trim() : null;
             let endDate = endDateMatch ? endDateMatch[1].trim() : null;
 
-            if (!product || !startDate || !endDate) {
-              console.error("Could not extract Product, Start Date, or End Date from issue body.");
+            if (!products.length || !environment || !startDate || !endDate) {
+              console.error("Could not extract Product, Environment, Start Date, or End Date from issue body.");
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
-                body: "Error: Could not automatically extract Product, Start Date, or End Date from the issue. Please ensure the issue template was used correctly."
+                body: "Error: Could not automatically extract Product, Environment, Start Date, or End Date from the issue. Please ensure the issue template was used correctly."
               });
               return;
             }
 
-            console.log("Extracted Data:");
-            console.log("Product:", product);
-            console.log("Start Date:", startDate);
-            console.log("End Date:", endDate);
-
-            // --- Trigger Product-Based Workflow ---
-            const workflowToTrigger = `product-${product.toLowerCase().trim()}-workflow.yml`; // Corrected workflow filename
-            console.log(`Attempting to trigger workflow: ${workflowToTrigger}`);
-
-            try {
-              await github.rest.issues.createComment({ // MOVED COMMENT BEFORE DISPATCH (FOR TESTING)
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue.number,
-                body: `Workflow for product **${product}** triggered successfully. Dates: Start: **${startDate}**, End: **${endDate}**.  You can track the workflow run in the Actions tab.`
-              });
-              await github.rest.actions.createWorkflowDispatch({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                workflow_id: workflowToTrigger,
-                ref: context.ref,
-                inputs: {
-                  start_date: startDate,
-                  end_date: endDate,
-                  product: product,
-                  issue_number: issue.number.toString()
-                },
-              });
-              console.log(`Successfully triggered workflow: ${workflowToTrigger}`);
-            } catch (error) {
-              console.error("Error triggering workflow:", error);
-              await github.rest.issues.createComment({ // ERROR COMMENT - KEEP AS IS
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue.number,
-                body: `Error: Failed to trigger workflow for product **${product}**. Please check workflow configuration and logs. Error details: \n\`\`\`\n${error.message}\n\`\`\``
-              });
+            // Check if the commenter is an allowed manager for all products
+            for (const product of products) {
+              if (!allowedManagers[product] || !allowedManagers[product].includes(commenterLogin)) {
+                console.log(`Comment by ${commenterLogin} is not from an authorized manager for product ${product}. Exiting.`);
+                return;
+              }
             }
+
+            // Calculate cron expression from start date and time
+            const startDateTime = new Date(startDate);
+            const cronExpression = `${startDateTime.getUTCMinutes()} ${startDateTime.getUTCHours()} ${startDateTime.getUTCDate()} ${startDateTime.getUTCMonth() + 1} *`;
+
+            // Update the workflow file with the new schedule
+            const fs = require('fs');
+            const path = require('path');
+            const workflowFilePath = path.join(process.env.GITHUB_WORKSPACE, '.github', 'workflows', `product-${products[0].toLowerCase().trim()}-workflow.yml`);
+            let workflowContent = fs.readFileSync(workflowFilePath, 'utf8');
+            workflowContent = workflowContent.replace(/schedule:\n\s+- cron: '.*'/, `schedule:\n  - cron: '${cronExpression}'`);
+            fs.writeFileSync(workflowFilePath, workflowContent);
+
+            // Commit the changes
+            await github.rest.repos.createOrUpdateFileContents({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              path: `.github/workflows/product-${products[0].toLowerCase().trim()}-workflow.yml`,
+              message: `Update schedule for product ${products[0]} workflow`,
+              content: Buffer.from(workflowContent).toString('base64'),
+              sha: (await github.rest.repos.getContent({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                path: `.github/workflows/product-${products[0].toLowerCase().trim()}-workflow.yml`
+              })).data.sha
+            });
+
+            // Update the issue with the approval details
+            let approvalDetails = '| Product | Approved By |\n| --- | --- |\n';
+            for (const product of products) {
+              approvalDetails += `| ${product} | ${commenterLogin} |\n`;
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: `Workflow for product(s) **${products.join(', ')}** in environment **${environment}** scheduled successfully. Dates: Start: **${startDate}**, End: **${endDate}**.\n\n### Approval Details\n${approvalDetails}`
+            });
