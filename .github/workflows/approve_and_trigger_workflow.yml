@@ -198,19 +198,13 @@ jobs:
                     sha: newCommit.data.sha
                   });
 
-                  // Update the issue with the approval details and commit link
-                  let approvalDetails = '| Product | Approved By |\n| --- | --- |\n';
-                  for (const product of products) {
-                    approvalDetails += `| ${product} | ${commenterLogin} |\n`;
-                  }
-
                   const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${newCommit.data.sha}`;
 
                   await github.rest.issues.createComment({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     issue_number: issue.number,
-                    body: `### Workflow Scheduled Successfully\n\n| **Products** | **Environment** | **Start Date** | **End Date** |\n| --- | --- | --- | --- |\n| ${products.join(', ')} | ${environment} | ${startDate} | ${endDate} |\n\n### Approval Details\n${approvalDetails}\n\n### Commit\n[View Commit](${commitUrl})`
+                    body: `### Workflow Scheduled Successfully\n\n| **Products** | **Environment** | **Start Date** | **End Date** |\n| --- | --- | --- | --- |\n| ${products.join(', ')} | ${environment} | ${startDate} | ${endDate} |\n\n### Commit\n[View Commit](${commitUrl})`
                   });
 
                   // Link the commit to the issue
