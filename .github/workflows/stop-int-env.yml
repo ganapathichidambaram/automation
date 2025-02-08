@@ -2,7 +2,7 @@ name: Product A Workflow
 
 on:
   schedule:
-    - cron: '0 6 26 12 *'
+  - cron: '0 6 26 12 *'
   workflow_dispatch:
     inputs:
       start_date:
