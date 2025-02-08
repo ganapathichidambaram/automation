@@ -72,12 +72,6 @@ jobs:
             const path = require('path');
             const workflowFilePath = path.join(process.env.GITHUB_WORKSPACE, '.github', 'workflows', `product-${products[0].toLowerCase().trim()}-workflow.yml`);
 
-            console.log(`Resolved workflow file path: ${workflowFilePath}`);
-            console.log(`Current directory: ${process.cwd()}`);
-            console.log(`Files in current directory: ${fs.readdirSync(process.cwd())}`);
-            console.log(`Files in .github directory: ${fs.readdirSync(path.join(process.env.GITHUB_WORKSPACE, '.github'))}`);
-            console.log(`Files in workflows directory: ${fs.readdirSync(path.join(process.env.GITHUB_WORKSPACE, '.github', 'workflows'))}`);
-
             if (!fs.existsSync(workflowFilePath)) {
               console.error(`Workflow file does not exist: ${workflowFilePath}`);
               await github.rest.issues.createComment({
@@ -93,7 +87,17 @@ jobs:
             let workflowContent = fs.readFileSync(workflowFilePath, 'utf8');
             workflowContent = workflowContent.replace(/schedule:\n\s+- cron: '.*'/, `schedule:\n  - cron: '${cronExpression}'`);
             fs.writeFileSync(workflowFilePath, workflowContent);
-
+            // Update the issue with the approval details
+            let approvalDetails = '| Product | Approved By |\n| --- | --- |\n';
+            for (const product of products) {
+              approvalDetails += `| ${product} | ${commenterLogin} |\n`;
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: `Workflow for product(s) **${products.join(', ')}** in environment **${environment}** scheduled successfully. Dates: Start: **${startDate}**, End: **${endDate}**.\n\n### Approval Details\n${approvalDetails}`
+            });
             // Commit the changes
             await github.rest.repos.createOrUpdateFileContents({
               owner: context.repo.owner,
@@ -108,14 +112,3 @@ jobs:
               })).data.sha
             });
 
-            // Update the issue with the approval details
-            let approvalDetails = '| Product | Approved By |\n| --- | --- |\n';
-            for (const product of products) {
-              approvalDetails += `| ${product} | ${commenterLogin} |\n`;
-            }
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issue.number,
-              body: `Workflow for product(s) **${products.join(', ')}** in environment **${environment}** scheduled successfully. Dates: Start: **${startDate}**, End: **${endDate}**.\n\n### Approval Details\n${approvalDetails}`
-            });
