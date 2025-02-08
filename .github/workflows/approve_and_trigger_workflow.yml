@@ -15,11 +15,19 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Generate GitHub App Token
+        id: generate_token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.PRIVATE_KEY }}
+
       - name: Check if Comment is Approval
         if: github.event.comment.body == 'Approve'
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ steps.generate_token.outputs.token }}
           script: |
             const issue = context.payload.issue;
             const comment = context.payload.comment;
@@ -87,17 +95,7 @@ jobs:
             let workflowContent = fs.readFileSync(workflowFilePath, 'utf8');
             workflowContent = workflowContent.replace(/schedule:\n\s+- cron: '.*'/, `schedule:\n  - cron: '${cronExpression}'`);
             fs.writeFileSync(workflowFilePath, workflowContent);
-            // Update the issue with the approval details
-            let approvalDetails = '| Product | Approved By |\n| --- | --- |\n';
-            for (const product of products) {
-              approvalDetails += `| ${product} | ${commenterLogin} |\n`;
-            }
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issue.number,
-              body: `Workflow for product(s) **${products.join(', ')}** in environment **${environment}** scheduled successfully. Dates: Start: **${startDate}**, End: **${endDate}**.\n\n### Approval Details\n${approvalDetails}`
-            });
+
             // Commit the changes
             await github.rest.repos.createOrUpdateFileContents({
               owner: context.repo.owner,
@@ -110,5 +108,17 @@ jobs:
                 repo: context.repo.repo,
                 path: `.github/workflows/product-${products[0].toLowerCase().trim()}-workflow.yml`
               })).data.sha
+            });
+
+            // Update the issue with the approval details
+            let approvalDetails = '| Product | Approved By |\n| --- | --- |\n';
+            for (const product of products) {
+              approvalDetails += `| ${product} | ${commenterLogin} |\n`;
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: `Workflow for product(s) **${products.join(', ')}** in environment **${environment}** scheduled successfully. Dates: Start: **${startDate}**, End: **${endDate}**.\n\n### Approval Details\n${approvalDetails}`
             });
 

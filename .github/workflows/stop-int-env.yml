@@ -1,0 +1,41 @@
+name: Product A Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: 'Start Date and Time'
+        required: true
+        type: string
+      end_date:
+        description: 'End Date and Time'
+        required: true
+        type: string
+      product:
+        description: 'Product Name'
+        required: true
+        type: string
+      issue_number:
+        description: 'Issue Number (for context)'
+        required: false
+        type: string
+
+jobs:
+  run_product_a_workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Your Product A Workflow Steps
+        run: |
+          echo "Running Product A workflow..."
+          echo "Product: ${{ github.event.inputs.product }}"
+          echo "Start Date: ${{ github.event.inputs.start_date }}"
+          echo "End Date: ${{ github.event.inputs.end_date }}"
+          echo "Issue Number: ${{ github.event.inputs.issue_number }}"
+
+          # --- Add your actual Product A workflow logic here ---
+          # ... (e.g., deploy application, run tests, etc.)
+          sleep 10 # Example: Simulate workflow duration
+          echo "Product A workflow completed."
