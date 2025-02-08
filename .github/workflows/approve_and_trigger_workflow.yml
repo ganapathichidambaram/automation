@@ -68,6 +68,19 @@ jobs:
             const fs = require('fs');
             const path = require('path');
             const workflowFilePath = path.join(process.env.GITHUB_WORKSPACE, '.github', 'workflows', `product-${products[0].toLowerCase().trim()}-workflow.yml`);
+
+            console.log(`Resolved workflow file path: ${workflowFilePath}`);
+            if (!fs.existsSync(workflowFilePath)) {
+              console.error(`Workflow file does not exist: ${workflowFilePath}`);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `Error: Workflow file for product **${products[0]}** does not exist. Please check the workflow configuration.`
+              });
+              return;
+            }
+
             let workflowContent = fs.readFileSync(workflowFilePath, 'utf8');
             workflowContent = workflowContent.replace(/schedule:\n\s+- cron: '.*'/, `schedule:\n  - cron: '${cronExpression}'`);
             fs.writeFileSync(workflowFilePath, workflowContent);
