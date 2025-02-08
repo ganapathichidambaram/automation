@@ -19,6 +19,7 @@ jobs:
         if: github.event.comment.body == 'Approve'
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const issue = context.payload.issue;
             const comment = context.payload.comment;
