@@ -13,9 +13,9 @@ body:
       description: Select the product(s) for this workflow.
       multiple: true
       options:
-        - ProductA
-        - ProductB
-        - ProductC
+        - int
+        - e2em
+        - b2b
         # Add your actual product options here
   - type: dropdown
     id: environment
