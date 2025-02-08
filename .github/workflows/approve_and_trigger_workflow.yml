@@ -11,6 +11,21 @@ jobs:
   check_approval_and_trigger:
     runs-on: ubuntu-latest
     steps:
+      - name: Minimal Test Script
+        if: github.event.comment.body == 'Approve'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            try {
+              await github.api.issues.createComment({
+                owner: context.repo.owner, // Or try hardcoding "your-repo-owner"
+                repo: context.repo.repo,   // Or try hardcoding "your-repo-name"
+                issue_number: context.issue.number, // Or try hardcoding issue number
+                body: "Minimal test comment."
+              });
+            } catch (error) {
+              console.error("Error creating comment:", error);
+            }
       - name: Check if Comment is Approval
         if: github.event.comment.body == 'Approve'
         uses: actions/github-script@v6
