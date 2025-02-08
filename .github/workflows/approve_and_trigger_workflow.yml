@@ -33,8 +33,8 @@ jobs:
             const comment = context.payload.comment;
             const commenterLogin = comment.user.login;
             const allowedManagers = {
-              'int': ['ganapathichidambaram', 'managerA2'],
-              'e2em': ['ganapathichidambaram', 'managerB2'],
+              'int': ['ganapathichidambaram1', 'managerA2'],
+              'e2em': ['ganapathichidambaram1', 'managerB2'],
               'ProductC': ['ganapathichidambaram', 'managerC2']
             };
             const infraManagers = ['ganapathichidambaram', 'infraManager2'];
