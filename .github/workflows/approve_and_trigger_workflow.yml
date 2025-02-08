@@ -17,10 +17,10 @@ jobs:
         with:
           script: |
             try {
-              await github.api.issues.createComment({
-                owner: context.repo.owner, // Or try hardcoding "your-repo-owner"
-                repo: context.repo.repo,   // Or try hardcoding "your-repo-name"
-                issue_number: context.issue.number, // Or try hardcoding issue number
+              await github.rest.issues.createComment({
+                owner: "ganapathichidambaram", // Or try hardcoding "your-repo-owner"
+                repo: "automation",   // Or try hardcoding "your-repo-name"
+                issue_number: context.issue.number.toString(), // Or try hardcoding issue number
                 body: "Minimal test comment."
               });
             } catch (error) {
@@ -66,7 +66,7 @@ jobs:
 
             if (!product || !startDate || !endDate) {
               console.error("Could not extract Product, Start Date, or End Date from issue body.");
-              github.api.issues.createComment({
+              github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
@@ -109,7 +109,7 @@ jobs:
 
             } catch (error) {
               console.error("Error triggering workflow:", error);
-              github.api.issues.createComment({ // ERROR COMMENT - KEEP AS IS
+              github.rest.issues.createComment({ // ERROR COMMENT - KEEP AS IS
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
