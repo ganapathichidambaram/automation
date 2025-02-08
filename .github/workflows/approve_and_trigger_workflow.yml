@@ -13,6 +13,8 @@ jobs:
   check_approval_and_trigger:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
       - name: Check if Comment is Approval
         if: github.event.comment.body == 'Approve'
         uses: actions/github-script@v6
@@ -72,7 +74,8 @@ jobs:
             console.log(`Resolved workflow file path: ${workflowFilePath}`);
             console.log(`Current directory: ${process.cwd()}`);
             console.log(`Files in current directory: ${fs.readdirSync(process.cwd())}`);
-
+            console.log(`Files in .github directory: ${fs.readdirSync(path.join(process.env.GITHUB_WORKSPACE, '.github'))}`);
+            console.log(`Files in workflows directory: ${fs.readdirSync(path.join(process.env.GITHUB_WORKSPACE, '.github', 'workflows'))}`);
 
             if (!fs.existsSync(workflowFilePath)) {
               console.error(`Workflow file does not exist: ${workflowFilePath}`);
