@@ -1,6 +1,7 @@
 name: Approve and Trigger Product Workflow
 
 permissions:
+  issues: write
   actions: write
 
 on:
@@ -18,9 +19,9 @@ jobs:
           script: |
             try {
               await github.rest.issues.createComment({
-                owner: "ganapathichidambaram", // Or try hardcoding "your-repo-owner"
-                repo: "automation",   // Or try hardcoding "your-repo-name"
-                issue_number: context.issue.number.toString(), // Or try hardcoding issue number
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
                 body: "Minimal test comment."
               });
             } catch (error) {
@@ -63,10 +64,9 @@ jobs:
             let startDate = startDateMatch ? startDateMatch[1].trim() : null;
             let endDate = endDateMatch ? endDateMatch[1].trim() : null;
 
-
             if (!product || !startDate || !endDate) {
               console.error("Could not extract Product, Start Date, or End Date from issue body.");
-              github.rest.issues.createComment({
+              await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
@@ -80,13 +80,12 @@ jobs:
             console.log("Start Date:", startDate);
             console.log("End Date:", endDate);
 
-
             // --- Trigger Product-Based Workflow ---
             const workflowToTrigger = `product-${product.toLowerCase().trim()}-workflow.yml`; // Corrected workflow filename
             console.log(`Attempting to trigger workflow: ${workflowToTrigger}`);
 
             try {
-              github.api.issues.createComment({ // MOVED COMMENT BEFORE DISPATCH (FOR TESTING)
+              await github.rest.issues.createComment({ // MOVED COMMENT BEFORE DISPATCH (FOR TESTING)
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
@@ -105,11 +104,9 @@ jobs:
                 },
               });
               console.log(`Successfully triggered workflow: ${workflowToTrigger}`);
-
-
             } catch (error) {
               console.error("Error triggering workflow:", error);
-              github.rest.issues.createComment({ // ERROR COMMENT - KEEP AS IS
+              await github.rest.issues.createComment({ // ERROR COMMENT - KEEP AS IS
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
