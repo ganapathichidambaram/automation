@@ -115,18 +115,19 @@ jobs:
               }
 
               let startWorkflowContent = fs.readFileSync(startWorkflowFilePath, 'utf8');
-              if (startWorkflowContent.includes('schedule:')) {
-                startWorkflowContent = startWorkflowContent.replace(/schedule:\n\s+- cron: '.*'/, `schedule:\n  - cron: '${startCronExpression}'`);
-              } else if (startWorkflowContent.includes('on:')) {
-                startWorkflowContent = startWorkflowContent.replace(/on:/, `on:\n  schedule:\n    - cron: '${startCronExpression}'`);
-              } else {
-                startWorkflowContent = `on:\n  schedule:\n    - cron: '${startCronExpression}'\n` + startWorkflowContent;
+              const newStartWorkflowContent = startWorkflowContent.includes('schedule:')
+                ? startWorkflowContent.replace(/schedule:\n\s+- cron: '.*'/, `schedule:\n  - cron: '${startCronExpression}'`)
+                : startWorkflowContent.includes('on:')
+                ? startWorkflowContent.replace(/on:/, `on:\n  schedule:\n    - cron: '${startCronExpression}'`)
+                : `on:\n  schedule:\n    - cron: '${startCronExpression}'\n` + startWorkflowContent;
+
+              if (newStartWorkflowContent !== startWorkflowContent) {
+                fs.writeFileSync(startWorkflowFilePath, newStartWorkflowContent);
+                filesToUpdate.push({
+                  path: `.github/workflows/start-${product.toLowerCase().trim()}-env.yml`,
+                  content: newStartWorkflowContent
+                });
               }
-              fs.writeFileSync(startWorkflowFilePath, startWorkflowContent);
-              filesToUpdate.push({
-                path: `.github/workflows/start-${product.toLowerCase().trim()}-env.yml`,
-                content: startWorkflowContent
-              });
 
               // Update the stop workflow file with the new schedule
               const stopWorkflowFilePath = path.join(process.env.GITHUB_WORKSPACE, '.github', 'workflows', `stop-${product.toLowerCase().trim()}-env.yml`);
@@ -143,18 +144,19 @@ jobs:
               }
 
               let stopWorkflowContent = fs.readFileSync(stopWorkflowFilePath, 'utf8');
-              if (stopWorkflowContent.includes('schedule:')) {
-                stopWorkflowContent = stopWorkflowContent.replace(/schedule:\n\s+- cron: '.*'/, `schedule:\n  - cron: '${endCronExpression}'`);
-              } else if (stopWorkflowContent.includes('on:')) {
-                stopWorkflowContent = stopWorkflowContent.replace(/on:/, `on:\n  schedule:\n    - cron: '${endCronExpression}'`);
-              } else {
-                stopWorkflowContent = `on:\n  schedule:\n    - cron: '${endCronExpression}'\n` + stopWorkflowContent;
+              const newStopWorkflowContent = stopWorkflowContent.includes('schedule:')
+                ? stopWorkflowContent.replace(/schedule:\n\s+- cron: '.*'/, `schedule:\n  - cron: '${endCronExpression}'`)
+                : stopWorkflowContent.includes('on:')
+                ? stopWorkflowContent.replace(/on:/, `on:\n  schedule:\n    - cron: '${endCronExpression}'`)
+                : `on:\n  schedule:\n    - cron: '${endCronExpression}'\n` + stopWorkflowContent;
+
+              if (newStopWorkflowContent !== stopWorkflowContent) {
+                fs.writeFileSync(stopWorkflowFilePath, newStopWorkflowContent);
+                filesToUpdate.push({
+                  path: `.github/workflows/stop-${product.toLowerCase().trim()}-env.yml`,
+                  content: newStopWorkflowContent
+                });
               }
-              fs.writeFileSync(stopWorkflowFilePath, stopWorkflowContent);
-              filesToUpdate.push({
-                path: `.github/workflows/stop-${product.toLowerCase().trim()}-env.yml`,
-                content: stopWorkflowContent
-              });
             }
 
             // If infra manager approved, commit the changes
@@ -208,6 +210,14 @@ jobs:
                   repo: context.repo.repo,
                   issue_number: issue.number,
                   body: `### Workflow Scheduled Successfully\n\n| **Products** | **Environment** | **Start Date** | **End Date** |\n| --- | --- | --- | --- |\n| ${products.join(', ')} | ${environment} | ${startDate} | ${endDate} |\n\n### Approval Details\n${approvalDetails}\n\n### Commit\n[View Commit](${commitUrl})`
+                });
+
+                // Link the commit to the issue
+                await github.rest.issues.addAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  assignees: [commenterLogin]
                 });
               } else {
                 console.log("No changes to commit.");
