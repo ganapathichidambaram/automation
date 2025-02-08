@@ -116,7 +116,7 @@ jobs:
               fs.writeFileSync(startWorkflowFilePath, startWorkflowContent);
               filesToUpdate.push({
                 path: `.github/workflows/start-${product.toLowerCase().trim()}-env.yml`,
-                content: Buffer.from(startWorkflowContent).toString('base64')
+                content: startWorkflowContent
               });
 
               // Update the stop workflow file with the new schedule
@@ -145,24 +145,43 @@ jobs:
               fs.writeFileSync(stopWorkflowFilePath, stopWorkflowContent);
               filesToUpdate.push({
                 path: `.github/workflows/stop-${product.toLowerCase().trim()}-env.yml`,
-                content: Buffer.from(stopWorkflowContent).toString('base64')
+                content: stopWorkflowContent
               });
             }
 
             // Commit the changes in a single commit
             const commitMessage = `Update schedule for product workflows`;
-            const changes = filesToUpdate.map(file => ({
-              path: file.path,
-              mode: '100644',
-              type: 'blob',
-              content: file.content
-            }));
+            const baseTree = (await github.rest.git.getRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'heads/main'
+            })).data.object.sha;
 
-            await github.rest.repos.createOrUpdateFiles({
+            const tree = await github.rest.git.createTree({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base_tree: baseTree,
+              tree: filesToUpdate.map(file => ({
+                path: file.path,
+                mode: '100644',
+                type: 'blob',
+                content: file.content
+              }))
+            });
+
+            const newCommit = await github.rest.git.createCommit({
               owner: context.repo.owner,
               repo: context.repo.repo,
               message: commitMessage,
-              changes
+              tree: tree.data.sha,
+              parents: [baseTree]
+            });
+
+            await github.rest.git.updateRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'heads/main',
+              sha: newCommit.data.sha
             });
 
             // Update the issue with the approval details
