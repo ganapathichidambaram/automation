@@ -220,7 +220,7 @@ jobs:
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     issue_number: issue.number,
-                    body: `### Infra Manager Approval Received\n\n| **Products** | **Environment** | **Start Date** | **End Date** |\n| --- | --- | --- | --- |\n| ${products.join(', ')} | ${environment} | ${startDate} | ${endDate} |\n\n**Approved By:** ${commenterLogin}\n\nNo changes were made as the content is already up to date.`
+                    body: `### Infra Manager Approval Received\n\n| **Products** | **Environment** | **Start Date** | **End Date** |\n| --- | --- | --- | --- |\n| ${products.join(', ')} | ${environment} | ${startDate} | ${endDate} |\n\nNo changes were made as the content is already up to date.`
                   });
                 }
               } else {
