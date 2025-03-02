@@ -109,6 +109,7 @@ jobs:
           token: ${{ steps.generate_token.outputs.token }}
           branch: "${{ steps.create_branch.outputs.brch_name }}"
           title: "Update image versions $(date +%Y-%m-%d)"
+          base: main
           body: |
             Automated PR to update image versions in YAML files
 
