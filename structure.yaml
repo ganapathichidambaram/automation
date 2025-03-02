@@ -1,5 +1,5 @@
 app:
-  - name: "image1"
+  - name: "ubi9-micro"
     files:
       - path: "values/values1.yaml"
         update-targets:
