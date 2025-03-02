@@ -34,7 +34,11 @@ jobs:
 
             const issueBody = issue.body;
             console.log("Issue Body:", issueBody);
-                 const imageList = issueBody.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            const imageList = issueBody
+            .split('\n')  // Split body into lines
+            .map(line => line.trim())  // Trim whitespace
+            .filter(line => line.length > 0 && /^[a-zA-Z0-9_\-]+:[a-zA-Z0-9_\-\.]+$/.test(line));  // Match 'name:tag' format
+
 
             // Log the image list to check it
             console.log("Image List:", imageList);
