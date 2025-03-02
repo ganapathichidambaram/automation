@@ -60,7 +60,7 @@ jobs:
             echo "Checking image: $imageTag"
 
             # Run skopeo to check if the image exists in the registry and fetch the digest
-            result=$(skopeo inspect --format '{{.Digest}}' docker://docker.io/$imageTag)
+            result=$(skopeo inspect --format '{{.Digest}}' docker://docker.io/$imageTag 2>&1)
 
             if [[ $? -eq 0 ]]; then
               # If the image exists, add to success JSON array
