@@ -111,6 +111,8 @@ jobs:
           title: "Update image versions $(date +%Y-%m-%d)"
           base: main
           delete_branch: false
+          add-paths: |
+            "values/*.yaml"
           body: |
             Automated PR to update image versions in YAML files
 
