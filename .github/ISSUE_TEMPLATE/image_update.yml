@@ -1,16 +1,13 @@
 name: Image Update Request
 description: Image Update Request.
-labels: ["image-update-request"] # Optional label for filtering issues
+labels: ["image-update"] # Optional label for filtering issues
+title: "[Image Update]"
 body:
-  - type: input
+  - type: textarea
     id: image_names
     attributes:
-      label: Image Names
-      description: Enter the image names separated by comma.
-      placeholder: is,lj,um,engine
-  - type: input
-    id: image_tags
-    attributes:
-      label: Image Tags
-      description: Enter the image tags separated by comma.
-      placeholder: 11.0.1.1,11.0.1.4
+      label: Image along with tags
+      description: Enter the image names along with tags separated by new line.
+      placeholder: |
+        lj:11.0.1.1
+        is:11.0.1.4
