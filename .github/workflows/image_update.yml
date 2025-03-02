@@ -10,7 +10,7 @@ on:
     types: [created]
 
 jobs:
-  check_approval_and_trigger:
+  image_update:
     if: contains(github.event.issue.labels.*.name, 'image-update')
     runs-on: ubuntu-latest
     steps:
@@ -34,3 +34,7 @@ jobs:
 
             const issueBody = issue.body;
             console.log("Issue Body:", issueBody);
+                 const imageList = issueBody.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+
+            // Log the image list to check it
+            console.log("Image List:", imageList);
