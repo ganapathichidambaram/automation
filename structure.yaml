@@ -1,5 +1,5 @@
 app:
-  - name: "ubi9-micro"
+  - name: "redhat/ubi9-micro"
     files:
       - path: "values/values1.yaml"
         update-targets:
