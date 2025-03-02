@@ -78,9 +78,14 @@ jobs:
       - name: Run Go Program
         id: update_yamls
         run: |
-          SUCCESS_IMAGES='${{ steps.process_images.outputs.success_images }}'
+          # Escape the JSON properly using jq
+          SUCCESS_IMAGES=$(echo '${{ steps.process_images.outputs.success_images }}' | jq -c '.')
           echo "$SUCCESS_IMAGES" > success_images.json
-          go run main.go update --structure structure.yaml --input $SUCCESS_IMAGES
+
+          # Use the file as input instead of direct JSON string
+          go run main.go update \
+            --structure structure.yaml \
+            --input "$(cat success_images.json)"
 
       - name: Create Branch and Commit Changes
         run: |
