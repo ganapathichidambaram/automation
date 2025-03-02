@@ -80,7 +80,7 @@ jobs:
         run: |
           SUCCESS_IMAGES='${{ steps.process_images.outputs.success_images }}'
           echo "$SUCCESS_IMAGES" > success_images.json
-          go run cmd/main.go -input success_images.json
+          go run main.go update --structure structure.yaml -input $SUCCESS_IMAGES
 
       - name: Create Branch and Commit Changes
         run: |
