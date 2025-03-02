@@ -45,7 +45,7 @@ jobs:
             console.log(`Processing image: ${imageTag}`);
               try {
                 console.log(`Checking image: ${imageTag}`);
-                const result = exec(`skopeo inspect --format='{{index .RepoDigests 0}}' docker://$${imageTag}`);
+                const result = exec(`skopeo inspect --format='{{index .RepoDigests 0}}' docker://docker.io/$${imageTag}`);
                 console.log(`SHA ID for ${imageTag}:`, result.toString());
               } catch (error) {
                 console.log(`Image ${imageTag} does not exist.`);
