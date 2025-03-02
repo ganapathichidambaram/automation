@@ -50,16 +50,66 @@ jobs:
             return imageList.join(',');
 
       - name: Process Docker Images
+        id: process_images
         run: |
           # Get the image list from the previous step's output
-          IMAGE_LIST=${{ steps.image_retrieval.outputs.result }}
+          IMAGE_LIST=${{ steps.check_if_comment_is_approval.outputs.result }}
+
+          # Initialize success and failure arrays
+          SUCCESS_IMAGES="[]"
+          FAILURE_IMAGES="[]"
+
           for imageTag in $(echo $IMAGE_LIST | tr ',' '\n'); do
             echo "Checking image: $imageTag"
-            # Run skopeo to check if the image exists in the registry
+
+            # Run skopeo to check if the image exists in the registry and fetch the digest
             result=$(skopeo inspect --format '{{.Digest}}' docker://docker.io/$imageTag)
+
             if [[ $? -eq 0 ]]; then
-              echo "SHA ID for $imageTag: $result"
+              # If the image exists, add to success JSON array
+              SUCCESS_IMAGES=$(echo $SUCCESS_IMAGES | jq ". + [{\"image\": \"$imageTag\", \"sha\": \"$result\"}]")
             else
-              echo "Image $imageTag does not exist."
+              # If the image doesn't exist, add to failure JSON array
+              FAILURE_IMAGES=$(echo $FAILURE_IMAGES | jq ". + [{\"image\": \"$imageTag\", \"error\": \"Image not found.\"}]")
             fi
           done
+
+          # Log the results (Success and Failure)
+          echo "Success Images: $SUCCESS_IMAGES"
+          echo "Failure Images: $FAILURE_IMAGES"
+
+          # Set the success and failure JSONs as output variables
+          echo "::set-output name=success_images::$SUCCESS_IMAGES"
+          echo "::set-output name=failure_images::$FAILURE_IMAGES"
+
+          # Create markdown for the issue comment
+          SUCCESS_MARKDOWN="### Successfully Found Images\n"
+          for image in $(echo "$SUCCESS_IMAGES" | jq -r '.[].image'); do
+            SUCCESS_MARKDOWN="${SUCCESS_MARKDOWN}- $image\n"
+          done
+
+          FAILURE_MARKDOWN="### Failed Images\n"
+          for image in $(echo "$FAILURE_IMAGES" | jq -r '.[].image'); do
+            FAILURE_MARKDOWN="${FAILURE_MARKDOWN}- $image\n"
+          done
+
+          # Combine markdown
+          FINAL_MARKDOWN="${SUCCESS_MARKDOWN}\n${FAILURE_MARKDOWN}"
+
+          # Update GitHub issue comment with markdown
+          echo "Updating issue comment with results..."
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d "{\"body\": \"$FINAL_MARKDOWN\"}" \
+            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments"
+
+      - name: Further Process JSON Results
+        run: |
+          # Retrieve the success and failure results from the previous step
+          SUCCESS_IMAGES="${{ steps.process_images.outputs.success_images }}"
+          FAILURE_IMAGES="${{ steps.process_images.outputs.failure_images }}"
+
+          echo "Processing success and failure JSON..."
+          echo "Success Images: $SUCCESS_IMAGES"
+          echo "Failure Images: $FAILURE_IMAGES"
