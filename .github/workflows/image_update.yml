@@ -44,9 +44,6 @@ jobs:
             .map(line => line.trim())  // Trim whitespace
             .filter(line => line.length > 0 && /^[a-zA-Z0-9_\-\/]+:[a-zA-Z0-9_\-\.]+$/.test(line));  // Match 'name:tag' format
 
-
-            // Log the image list to check it
-            console.log("Image List:", imageList);
             return imageList.join(',');
 
       - name: Process Docker Images
@@ -74,36 +71,32 @@ jobs:
             fi
           done
 
-          # Log the results (Success and Failure)
-          echo "Success Images: $SUCCESS_IMAGES"
-          echo "Failure Images: $FAILURE_IMAGES"
-
           # Set the success and failure JSONs as output variables
           echo "success_images=$(echo $SUCCESS_IMAGES)" >> $GITHUB_OUTPUT
           echo "failure_images=$(echo $FAILURE_IMAGES)" >> $GITHUB_OUTPUT
 
 
           # Create markdown for the issue comment
-          SUCCESS_MARKDOWN="### Successfully Found Images\n"
-          for image in $(echo "$SUCCESS_IMAGES" | jq -r '.[].image'); do
-            SUCCESS_MARKDOWN="${SUCCESS_MARKDOWN}- $image\n"
-          done
+          # SUCCESS_MARKDOWN="### Successfully Found Images\n"
+          # for image in $(echo "$SUCCESS_IMAGES" | jq -r '.[].image'); do
+          #   SUCCESS_MARKDOWN="${SUCCESS_MARKDOWN}- $image\n"
+          # done
 
-          FAILURE_MARKDOWN="### Failed Images\n"
-          for image in $(echo "$FAILURE_IMAGES" | jq -r '.[].image'); do
-            FAILURE_MARKDOWN="${FAILURE_MARKDOWN}- $image\n"
-          done
+          # FAILURE_MARKDOWN="### Failed Images\n"
+          # for image in $(echo "$FAILURE_IMAGES" | jq -r '.[].image'); do
+          #   FAILURE_MARKDOWN="${FAILURE_MARKDOWN}- $image\n"
+          # done
 
-          # Combine markdown
-          FINAL_MARKDOWN="${SUCCESS_MARKDOWN}\n${FAILURE_MARKDOWN}"
+          # # Combine markdown
+          # FINAL_MARKDOWN="${SUCCESS_MARKDOWN}\n${FAILURE_MARKDOWN}"
 
-          # Update GitHub issue comment with markdown
-          echo "Updating issue comment with results..."
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -d "{\"body\": \"$FINAL_MARKDOWN\"}" \
-            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments"
+          # # Update GitHub issue comment with markdown
+          # echo "Updating issue comment with results..."
+          # curl -X POST \
+          #   -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          #   -H "Accept: application/vnd.github.v3+json" \
+          #   -d "{\"body\": \"$FINAL_MARKDOWN\"}" \
+          #   "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments"
 
       - name: Further Process JSON Results
         run: |
@@ -111,6 +104,5 @@ jobs:
           SUCCESS_IMAGES="${{ steps.process_images.outputs.success_images }}"
           FAILURE_IMAGES="${{ steps.process_images.outputs.failure_images }}"
 
-          echo "Processing success and failure JSON..."
           echo "Success Images: $SUCCESS_IMAGES"
           echo "Failure Images: $FAILURE_IMAGES"
