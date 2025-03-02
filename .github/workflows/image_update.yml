@@ -104,10 +104,10 @@ jobs:
           echo "brch_name=$branch_name" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ steps.generate_token.outputs.token }}
-          branch: ${{ steps.create_branch.outputs.brch_name }}
+          branch: "${{ steps.create_branch.outputs.brch_name }}"
           title: "Update image versions $(date +%Y-%m-%d)"
           body: |
             Automated PR to update image versions in YAML files
