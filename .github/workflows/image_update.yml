@@ -23,7 +23,12 @@ jobs:
         with:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.PRIVATE_KEY }}
-
+      - name: Install skopeo
+        id: install_skopeo
+        run: |
+          # Install skopeo and jq if not installed
+          sudo apt-get update
+          sudo apt-get install -y skopeo jq
       - name: Check if Comment is Approval
         if: startsWith(github.event.comment.body, '/approve')
         uses: actions/github-script@v6
@@ -48,6 +53,6 @@ jobs:
                 const result = exec(`skopeo inspect --format='{{index .RepoDigests 0}}' docker://docker.io/$${imageTag}`);
                 console.log(`SHA ID for ${imageTag}:`, result.toString());
               } catch (error) {
-                console.log(`Image ${imageTag} does not exist.`);
+                console.log(`Image ${imageTag} does not exist.`,error.message);
               }
              });
