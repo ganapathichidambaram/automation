@@ -11,6 +11,7 @@ on:
 
 jobs:
   check_approval_and_trigger:
+    if: contains(github.event.issue.labels.*.name, 'workflow-request')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

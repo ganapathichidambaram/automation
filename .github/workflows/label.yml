@@ -4,6 +4,7 @@ on:
 
 jobs:
   apply-label:
+    if: contains(github.event.issue.labels.*.name, 'workflow-request')
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App Token
