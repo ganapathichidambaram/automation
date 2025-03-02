@@ -79,8 +79,9 @@ jobs:
           echo "Failure Images: $FAILURE_IMAGES"
 
           # Set the success and failure JSONs as output variables
-          echo "success_images=$SUCCESS_IMAGES" >> $GITHUB_OUTPUT
-          echo "failure_images=$FAILURE_IMAGES" >> $GITHUB_OUTPUT
+          echo "success_images=$(echo $SUCCESS_IMAGES)" >> $GITHUB_ENV
+          echo "failure_images=$(echo $FAILURE_IMAGES)" >> $GITHUB_ENV
+
 
           # Create markdown for the issue comment
           SUCCESS_MARKDOWN="### Successfully Found Images\n"
