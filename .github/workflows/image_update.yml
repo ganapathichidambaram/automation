@@ -110,6 +110,7 @@ jobs:
           branch: "${{ steps.create_branch.outputs.brch_name }}"
           title: "Update image versions $(date +%Y-%m-%d)"
           base: main
+          delete_branch: false
           body: |
             Automated PR to update image versions in YAML files
 
