@@ -80,12 +80,11 @@ jobs:
         run: |
           # Escape the JSON properly using jq
           SUCCESS_IMAGES=$(echo '${{ steps.process_images.outputs.success_images }}' | jq -c '.')
-          echo "$SUCCESS_IMAGES" > success_images.json
 
-          # Use the file as input instead of direct JSON string
+          # Use the JSON string directly as input
           go run main.go update \
             --structure structure.yaml \
-            --input "$(cat success_images.json)"
+            --input "$SUCCESS_IMAGES"
 
       - name: Create Branch and Commit Changes
         run: |
@@ -99,6 +98,8 @@ jobs:
           git add .
           git commit -m "Update image versions $(date +%Y-%m-%d)"
           git push origin $branch_name
+
+          echo "branch_name=$branch_name" >> $GITHUB_ENV
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
