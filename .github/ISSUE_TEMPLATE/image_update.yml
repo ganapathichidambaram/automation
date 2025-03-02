@@ -1,0 +1,16 @@
+name: Image Update Request
+description: Image Update Request.
+labels: ["workflow-request"] # Optional label for filtering issues
+body:
+  - type: textarea
+    id: image_names
+    attributes:
+      label: Image Names
+      description: Enter the image names separated by comma.
+      placeholder: is,lj,um,engine
+  - type: textarea
+    id: image_tags
+    attributes:
+      label: Image Tags
+      description: Enter the image tags separated by comma.
+      placeholder: 11.0.1.1,11.0.1.4
