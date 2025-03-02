@@ -92,6 +92,9 @@ jobs:
       - name: Create Branch and Commit Changes
         id: create_branch
         run: |
+          # Add all files to git tracking (including untracked files)
+          git add -A
+
           # Check if there are any changes
           if [[ -n "$(git status --porcelain)" ]]; then
             current_date=$(date +%Y%m%d_%H%M%S)
@@ -101,9 +104,10 @@ jobs:
             git config --global user.email "actions@github.com"
 
             git checkout -b $branch_name
-            git add .
+            # Force add all changes to ensure nothing is missed
+            git add -A
             git commit -m "Update image versions $(date +%Y-%m-%d)"
-            git push origin $branch_name
+            git push -u origin $branch_name --force
 
             echo "branch_name=$branch_name" >> $GITHUB_ENV
             echo "changes_found=true" >> $GITHUB_OUTPUT
