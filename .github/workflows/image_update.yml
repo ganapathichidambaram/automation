@@ -86,6 +86,7 @@ jobs:
           go run main.go update \
             --structure structure.yaml \
             --input "$(cat success_images.json)"
+          rm -f success_images.json
 
       - name: Create Branch and Commit Changes
         run: |
