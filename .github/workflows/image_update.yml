@@ -67,7 +67,7 @@ jobs:
               SUCCESS_IMAGES=$(echo $SUCCESS_IMAGES | jq ". + [{\"image\": \"$imageTag\", \"sha\": \"$result\"}]")
             else
               # If the image doesn't exist, add to failure JSON array
-              FAILURE_IMAGES=$(echo $FAILURE_IMAGES | jq ". + [{\"image\": \"$imageTag\", \"error\": \"true.\"}]")
+              FAILURE_IMAGES=$(echo $FAILURE_IMAGES | jq ". + [{\"image\": \"$imageTag\", \"error\": \"true\"}]")
             fi
           done
 
