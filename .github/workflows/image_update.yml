@@ -116,9 +116,6 @@ jobs:
             ```json
             ${{ steps.process_images.outputs.success_images }}
             ```
-          labels: |
-            automated-pr
-            image-update
 
       - name: Further Process JSON Results
         run: |
