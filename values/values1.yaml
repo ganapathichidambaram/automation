@@ -1,0 +1,29 @@
+shared:
+  images:
+    image1:
+      imageTag: "2.0.0"
+      imageDigest: "sha256:new123"
+    image2:
+      imageTag: "1.0.0"
+      imageDigest: "sha256:old123"
+spec:
+  template:
+    metadata:
+      annotations:
+        sidecar:
+          container:
+            details:
+              imageTag: "2.0.0"
+              imageDigest: "sha256:new123"
+    spec:
+      mainContainer:
+        image:
+          config:
+            imageTag: "2.0.0"
+            imageDigest: "sha256:new123"
+        other: "value"
+      initContainer:
+        container:
+          status:
+            imageTag: "2.0.0"
+            imageDigest: "sha256:new123"

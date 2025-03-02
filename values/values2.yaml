@@ -1,0 +1,28 @@
+metadata:
+  annotations:
+    image1:
+      status:
+        imageTag: "2.0.0"
+        imageDigest: "sha256:new123"
+app:
+  namee: "image2"
+  sds:
+    img-name:
+      image2:
+        imageTag: 11.0.1
+        imageDigest: sha256:1
+  config:
+    images:
+      image2:
+        imageTag: "3.1.0"
+        imageDigest: "sha256:new456"
+  containers:
+    - name: "container1"
+      image:
+        imageTag: ""
+        imageDigest: ""
+    - name: "container2"
+      config:
+        docker:
+          imageTag: "5.0.0"
+          imageDigest: "sha256:"

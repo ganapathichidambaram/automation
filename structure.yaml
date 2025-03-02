@@ -1,0 +1,31 @@
+app:
+  - name: "image1"
+    files:
+      - path: "values/values1.yaml"
+        update-targets:
+          - structure-path: "spec.template.spec"
+            object-key: "mainContainer"
+            image-parent-path: "image.config"
+          - structure-path: "spec.template.metadata.annotations"
+            object-key: "sidecar"
+            image-parent-path: "container.details"
+          - structure-path: "spec.template.spec"
+            object-key: "initContainer"
+            image-parent-path: "container.status"
+      - path: "values/values2.yaml"
+        update-targets:
+          - structure-path: "metadata.annotations"
+            object-key: "image1"
+            image-parent-path: "status"
+      - path: "values/values1.yaml"
+        update-targets:
+          - structure-path: "shared.images"
+            object-key: "image1"
+
+  - name: "image2"
+    files:
+      - path: "values/values2.yaml"
+        update-targets:
+          - structure-path: "app.config.images"
+            object-key: "image2"
+
