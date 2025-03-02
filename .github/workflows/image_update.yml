@@ -53,7 +53,7 @@ jobs:
         id: process_images
         run: |
           # Get the image list from the previous step's output
-          IMAGE_LIST=${{ steps.check_if_comment_is_approval.outputs.result }}
+          IMAGE_LIST=${{ steps.image_retrieval.outputs.result }}
 
           # Initialize success and failure arrays
           SUCCESS_IMAGES="[]"
@@ -79,8 +79,8 @@ jobs:
           echo "Failure Images: $FAILURE_IMAGES"
 
           # Set the success and failure JSONs as output variables
-          echo "::set-output name=success_images::$SUCCESS_IMAGES"
-          echo "::set-output name=failure_images::$FAILURE_IMAGES"
+          echo "success_images=$SUCCESS_IMAGES" >> $GITHUB_OUTPUT
+          echo "failure_images=$FAILURE_IMAGES" >> $GITHUB_OUTPUT
 
           # Create markdown for the issue comment
           SUCCESS_MARKDOWN="### Successfully Found Images\n"
