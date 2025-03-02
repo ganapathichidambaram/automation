@@ -87,7 +87,7 @@ jobs:
             --structure structure.yaml \
             --input "$(cat success_images.json)"
 
-          rm -f success_images.json
+          #rm -f success_images.json
 
       - name: Create Branch and Commit Changes
         id: create_branch
