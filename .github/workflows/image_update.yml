@@ -33,7 +33,6 @@ jobs:
             const issue = context.payload.issue;
 
             const issueBody = issue.body;
-            console.log("Issue Body:", issueBody);
             const imageList = issueBody
             .split('\n')  // Split body into lines
             .map(line => line.trim())  // Trim whitespace
@@ -42,3 +41,13 @@ jobs:
 
             // Log the image list to check it
             console.log("Image List:", imageList);
+            imageList.forEach(imageTag => {
+            console.log(`Processing image: ${imageTag}`);
+              try {
+                console.log(`Checking image: ${imageTag}`);
+                const result = exec(`skopeo inspect --format='{{index .RepoDigests 0}}' docker://$${imageTag}`);
+                console.log(`SHA ID for ${imageTag}:`, result.toString());
+              } catch (error) {
+                console.log(`Image ${imageTag} does not exist.`);
+              }
+             });
