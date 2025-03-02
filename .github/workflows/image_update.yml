@@ -90,21 +90,30 @@ jobs:
           rm -f success_images.json
 
       - name: Create Branch and Commit Changes
+        id: create_branch
         run: |
-          current_date=$(date +%Y%m%d_%H%M%S)
-          branch_name="image-update-${current_date}"
+          # Check if there are any changes
+          if [[ -n "$(git status --porcelain)" ]]; then
+            current_date=$(date +%Y%m%d_%H%M%S)
+            branch_name="image-update-${current_date}"
 
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
+            git config --global user.name "GitHub Actions"
+            git config --global user.email "actions@github.com"
 
-          git checkout -b $branch_name
-          git add .
-          git commit -m "Update image versions $(date +%Y-%m-%d)"
-          git push origin $branch_name
+            git checkout -b $branch_name
+            git add .
+            git commit -m "Update image versions $(date +%Y-%m-%d)"
+            git push origin $branch_name
 
-          echo "branch_name=$branch_name" >> $GITHUB_ENV
+            echo "branch_name=$branch_name" >> $GITHUB_ENV
+            echo "changes_found=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changes detected in files"
+            echo "changes_found=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Create Pull Request
+        if: steps.create_branch.outputs.changes_found == 'true'
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ steps.generate_token.outputs.token }}
@@ -121,6 +130,19 @@ jobs:
           labels: |
             automated-pr
             image-update
+
+      - name: Comment on Issue if No Changes
+        if: steps.create_branch.outputs.changes_found == 'false'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ steps.generate_token.outputs.token }}
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: 'No changes were required for the requested image updates.'
+            })
 
       - name: Further Process JSON Results
         run: |
