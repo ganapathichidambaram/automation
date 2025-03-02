@@ -46,7 +46,7 @@ func (h *Handler) UpdateFile(filePath string, targets []models.UpdatePath, input
 			return fmt.Errorf("failed to update path %s: %w", target.StructurePath, err)
 		}
 	}
-
+	fmt.Println("Updated file:", filePath)
 	return h.writeFile(filePath, &node)
 }
 
