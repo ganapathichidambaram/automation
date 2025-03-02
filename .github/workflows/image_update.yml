@@ -56,7 +56,7 @@ jobs:
           for imageTag in $(echo $IMAGE_LIST | tr ',' '\n'); do
             echo "Checking image: $imageTag"
             # Run skopeo to check if the image exists in the registry
-            result=$(skopeo inspect --format '{{index .RepoDigests 0}}' docker://docker.io/$imageTag)
+            result=$(skopeo inspect docker://docker.io/$imageTag)
             if [[ $? -eq 0 ]]; then
               echo "SHA ID for $imageTag: $result"
             else
