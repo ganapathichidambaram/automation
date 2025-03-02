@@ -78,19 +78,16 @@ jobs:
       - name: Run Go Program
         id: update_yamls
         run: |
-          # Write the raw JSON to a file first
+          # Escape the JSON properly using jq
           SUCCESS_IMAGES=$(echo '${{ steps.process_images.outputs.success_images }}' | jq -c '.')
           echo "$SUCCESS_IMAGES" > success_images.json
 
-          # Run the Go program with the formatted JSON file
+          # Use the file as input instead of direct JSON string
           go run main.go update \
             --structure structure.yaml \
             --input "$(cat success_images.json)"
 
-          #rm -f success_images.json
-
       - name: Create Branch and Commit Changes
-        id: create_branch
         run: |
           current_date=$(date +%Y%m%d_%H%M%S)
           branch_name="image-update-${current_date}"
@@ -103,13 +100,11 @@ jobs:
           git commit -m "Update image versions $(date +%Y-%m-%d)"
           git push origin $branch_name
 
-          echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
-
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ steps.generate_token.outputs.token }}
-          branch: ${{ steps.create_branch.outputs.branch_name }}
+          branch: ${{ env.branch_name }}
           title: "Update image versions $(date +%Y-%m-%d)"
           body: |
             Automated PR to update image versions in YAML files
