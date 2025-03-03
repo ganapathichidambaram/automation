@@ -119,6 +119,7 @@ jobs:
             ```json
             ${{ steps.process_images.outputs.success_images }}
             ```
+          commit-message: "Update image versions $(date +%Y-%m-%d)"
 
       - name: Further Process JSON Results
         run: |
