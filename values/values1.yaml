@@ -1,8 +1,8 @@
 shared:
   images:
     image1:
-      imageTag: "9.5"
-      imageDigest: "sha256:d115f8aad9c4ae7ee21ae75bbcb3dc2c5dbf9b57bf6dad6dcb5aac5c02003bde"
+      imageTag: "1.0"
+      imageDigest: "sha256:d115f8aad9c4ae7ee21ae75bbcb3dc2c5dbf1.07bf6dad6dcb5aac5c02003bde"
     image2:
       imageTag: "1.0.0"
       imageDigest: "sha256:old123"
@@ -13,17 +13,17 @@ spec:
         sidecar:
           container:
             details:
-              imageTag: "9.5"
-              imageDigest: "sha256:d115f8aad9c4ae7ee21ae75bbcb3dc2c5dbf9b57bf6dad6dcb5aac5c02003bde"
+              imageTag: "1.2"
+              imageDigest: "sha256:1"
     spec:
       mainContainer:
         image:
           config:
-            imageTag: "9.5"
-            imageDigest: "sha256:d115f8aad9c4ae7ee21ae75bbcb3dc2c5dbf9b57bf6dad6dcb5aac5c02003bde"
+            imageTag: "1.0"
+            imageDigest: ""
         other: "value"
       initContainer:
         container:
           status:
-            imageTag: "9.5"
-            imageDigest: "sha256:d115f8aad9c4ae7ee21ae75bbcb3dc2c5dbf9b57bf6dad6dcb5aac5c02003bde"
+            imageTag: "1.0"
+            imageDigest: ""
