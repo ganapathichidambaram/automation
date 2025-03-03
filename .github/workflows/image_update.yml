@@ -94,8 +94,8 @@ jobs:
           current_date=$(date +%Y%m%d_%H%M%S)
           branch_name="image-update-${current_date}"
 
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
+          # git config --global user.name "GitHub Actions"
+          # git config --global user.email "actions@github.com"
 
           git checkout -b $branch_name
           git add .
@@ -103,28 +103,24 @@ jobs:
           git push origin $branch_name
           echo "brch_name=$branch_name" >> $GITHUB_OUTPUT
 
-          gh pr create --base main --head $branch_name --title "Add greeting to README" --body "This PR adds a greeting to the README file."
-        env:
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          branch: "${{ steps.create_branch.outputs.brch_name }}"
+          title: "Update image versions $(date +%Y-%m-%d)"
+          #base: main
+          delete_branch: false
+          add-paths: |
+            "values/*.yaml"
+          body: |
+            Automated PR to update image versions in YAML files
 
-      # - name: Create Pull Request
-      #   uses: peter-evans/create-pull-request@v7
-      #   with:
-      #     token: ${{ steps.generate_token.outputs.token }}
-      #     branch: "${{ steps.create_branch.outputs.brch_name }}"
-      #     title: "Update image versions $(date +%Y-%m-%d)"
-      #     base: main
-      #     delete_branch: false
-      #     add-paths: |
-      #       "values/*.yaml"
-      #     body: |
-      #       Automated PR to update image versions in YAML files
-
-      #       Updated images:
-      #       ```json
-      #       ${{ steps.process_images.outputs.success_images }}
-      #       ```
+            Updated images:
+            ```json
+            ${{ steps.process_images.outputs.success_images }}
+            ```
 
       - name: Further Process JSON Results
         run: |
