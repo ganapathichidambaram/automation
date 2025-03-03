@@ -106,20 +106,7 @@ jobs:
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ steps.generate_token.outputs.token }}
-          branch: main
-          title: "Update image versions $(date +%Y-%m-%d)"
-          add-paths: |
-            "values/*.yaml"
-          body: |
-            Automated PR to update image versions in YAML files
 
-            Updated images:
-            ```json
-            ${{ steps.process_images.outputs.success_images }}
-            ```
-          commit-message: "Update image versions $(date +%Y-%m-%d)"
 
       - name: Further Process JSON Results
         run: |
