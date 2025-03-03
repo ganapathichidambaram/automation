@@ -104,6 +104,8 @@ jobs:
           echo "brch_name=$branch_name" >> $GITHUB_OUTPUT
 
           gh pr create --base main --head $branch_name --title "Add greeting to README" --body "This PR adds a greeting to the README file."
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
 
       # - name: Create Pull Request
