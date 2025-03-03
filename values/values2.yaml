@@ -2,8 +2,8 @@ metadata:
   annotations:
     image1:
       status:
-        imageTag: "4.5"
-        imageDigest: "sha256:"
+        imageTag: "9.5"
+        imageDigest: "sha256:d115f8aad9c4ae7ee21ae75bbcb3dc2c5dbf9b57bf6dad6dcb5aac5c02003bde"
 app:
   namee: "image2"
   sds:
