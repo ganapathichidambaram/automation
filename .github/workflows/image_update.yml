@@ -108,7 +108,7 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ steps.generate_token.outputs.token }}
-          branch: "${{ steps.create_branch.outputs.brch_name }}"
+          branch: main
           title: "Update image versions $(date +%Y-%m-%d)"
           add-paths: |
             "values/*.yaml"
